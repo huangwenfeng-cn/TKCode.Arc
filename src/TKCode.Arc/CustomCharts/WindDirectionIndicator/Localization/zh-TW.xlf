@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="2.1" srcLang="en-US" trgLang="zh-TW" xmlns="urn:oasis:names:tc:xliff:document:2.0">
+  <file id="TKCode.Arc.Localization.WindDirectionIndicatorLangResourceKind">
+    <unit id="North"><segment><source>N</source><target>北</target></segment></unit>
+    <unit id="NorthNortheast"><segment><source>NNE</source><target>北東北</target></segment></unit>
+    <unit id="Northeast"><segment><source>NE</source><target>東北</target></segment></unit>
+    <unit id="EastNortheast"><segment><source>ENE</source><target>東東北</target></segment></unit>
+    <unit id="East"><segment><source>E</source><target>東</target></segment></unit>
+    <unit id="EastSoutheast"><segment><source>ESE</source><target>東東南</target></segment></unit>
+    <unit id="Southeast"><segment><source>SE</source><target>東南</target></segment></unit>
+    <unit id="SouthSoutheast"><segment><source>SSE</source><target>南東南</target></segment></unit>
+    <unit id="South"><segment><source>S</source><target>南</target></segment></unit>
+    <unit id="SouthSouthwest"><segment><source>SSW</source><target>南西南</target></segment></unit>
+    <unit id="Southwest"><segment><source>SW</source><target>西南</target></segment></unit>
+    <unit id="WestSouthwest"><segment><source>WSW</source><target>西西南</target></segment></unit>
+    <unit id="West"><segment><source>W</source><target>西</target></segment></unit>
+    <unit id="WestNorthwest"><segment><source>WNW</source><target>西西北</target></segment></unit>
+    <unit id="Northwest"><segment><source>NW</source><target>西北</target></segment></unit>
+    <unit id="NorthNorthwest"><segment><source>NNW</source><target>北西北</target></segment></unit>
+    <unit id="WindDirection"><segment><source>Wind direction</source><target>風向</target></segment></unit>
+    <unit id="Calm"><segment><source>Calm</source><target>靜風</target></segment></unit>
+    <unit id="NoData"><segment><source>No data</source><target>無資料</target></segment></unit>
+  </file>
+</xliff>

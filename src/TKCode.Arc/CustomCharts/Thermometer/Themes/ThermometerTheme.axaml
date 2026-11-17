@@ -1,0 +1,17 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+                    x:ClassModifier="internal"
+                    x:Class="TKCode.Arc.ThermometerTheme">
+    <ControlTheme x:Key="{x:Type arc:Thermometer}" TargetType="arc:Thermometer">
+        <Setter Property="arc:ArcMotion.Tracks" Value="True" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="DialWidth" Value="{arc:ThermometerTokenResource DialWidth}" />
+        <Setter Property="DialHeight" Value="{arc:ThermometerTokenResource DialHeight}" />
+        <Setter Property="TubeWidth" Value="{arc:ThermometerTokenResource TubeWidth}" />
+        <Setter Property="BulbRadius" Value="{arc:ThermometerTokenResource BulbRadius}" />
+        <Setter Property="OutlineThickness" Value="{arc:ThermometerTokenResource OutlineThickness}" />
+        <Setter Property="MediumFontWeight" Value="{arc:ArcDesignTokenResource WeightMedium}" />
+        <Setter Property="RegularFontWeight" Value="{arc:ArcDesignTokenResource WeightRegular}" />
+    </ControlTheme>
+</ResourceDictionary>

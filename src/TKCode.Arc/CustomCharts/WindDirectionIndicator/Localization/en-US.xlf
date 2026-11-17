@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="2.1" srcLang="en-US" xmlns="urn:oasis:names:tc:xliff:document:2.0">
+  <file id="TKCode.Arc.Localization.WindDirectionIndicatorLangResourceKind">
+    <unit id="North"><segment><source>N</source></segment></unit>
+    <unit id="NorthNortheast"><segment><source>NNE</source></segment></unit>
+    <unit id="Northeast"><segment><source>NE</source></segment></unit>
+    <unit id="EastNortheast"><segment><source>ENE</source></segment></unit>
+    <unit id="East"><segment><source>E</source></segment></unit>
+    <unit id="EastSoutheast"><segment><source>ESE</source></segment></unit>
+    <unit id="Southeast"><segment><source>SE</source></segment></unit>
+    <unit id="SouthSoutheast"><segment><source>SSE</source></segment></unit>
+    <unit id="South"><segment><source>S</source></segment></unit>
+    <unit id="SouthSouthwest"><segment><source>SSW</source></segment></unit>
+    <unit id="Southwest"><segment><source>SW</source></segment></unit>
+    <unit id="WestSouthwest"><segment><source>WSW</source></segment></unit>
+    <unit id="West"><segment><source>W</source></segment></unit>
+    <unit id="WestNorthwest"><segment><source>WNW</source></segment></unit>
+    <unit id="Northwest"><segment><source>NW</source></segment></unit>
+    <unit id="NorthNorthwest"><segment><source>NNW</source></segment></unit>
+    <unit id="WindDirection"><segment><source>Wind direction</source></segment></unit>
+    <unit id="Calm"><segment><source>Calm</source></segment></unit>
+    <unit id="NoData"><segment><source>No data</source></segment></unit>
+  </file>
+</xliff>

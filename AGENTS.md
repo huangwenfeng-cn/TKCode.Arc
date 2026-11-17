@@ -16,6 +16,10 @@ Design source of truth: `design/` (start at `design/overview.md`).
 
 Read `design/engineering/implementation-guide.md` before writing a component: file layout, token rules, theme and motion patterns, the Core primitive catalog, performance and API rules, tests and known pitfalls.
 
+### Local development supplement
+
+The user requires new and changed code in this workspace to also follow `../implementation-guide.md` and the existing repository style and `.editorconfig`. The local guide is reconstructed from this checkout's code and tests; it is not the missing upstream handbook. Follow this file's explicit rules when they differ, document the difference, and do not treat an existing exception as permission to introduce another. Read the relevant peer implementations before changing a component and verify both behavior and compliance.
+
 ## Non-negotiable rules
 
 - Controls derive from Avalonia base types; only public Avalonia APIs are used. No AtomUI code or packages, and none of its source is consulted (clean room; design/decisions/0031-replace-atomui.md).

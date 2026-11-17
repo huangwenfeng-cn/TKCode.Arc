@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="2.1" srcLang="en-US" trgLang="zh-CN" xmlns="urn:oasis:names:tc:xliff:document:2.0">
+  <file id="TKCode.Arc.Localization.ThermometerLangResourceKind">
+    <unit id="Low"><segment><source>Low temperature</source><target>低温</target></segment></unit>
+    <unit id="Normal"><segment><source>Normal</source><target>正常</target></segment></unit>
+    <unit id="High"><segment><source>High temperature</source><target>高温</target></segment></unit>
+    <unit id="InvalidRange"><segment><source>Invalid range</source><target>量程配置错误</target></segment></unit>
+  </file>
+</xliff>

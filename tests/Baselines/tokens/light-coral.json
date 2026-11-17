@@ -8813,6 +8813,13 @@
       "IconTextGap": "8",
       "IconWrapExtent": "20"
     },
+    "Thermometer": {
+      "BulbRadius": "28",
+      "DialHeight": "360",
+      "DialWidth": "220",
+      "OutlineThickness": "1.5",
+      "TubeWidth": "36"
+    },
     "TicketRouter": {
       "CardMaxWidth": "840",
       "CardPadding": "16,16,16,16",
@@ -9808,6 +9815,14 @@
       "ToolbarGap": "12",
       "ToolbarItemHeight": "36",
       "ToolbarRowGap": "10"
+    },
+    "WindDirectionIndicator": {
+      "DialHeight": "352",
+      "DialWidth": "320",
+      "NeedleLength": "68",
+      "NeedleWidth": "48",
+      "OutlineThickness": "1.5",
+      "RingWidth": "18"
     },
     "WindRoseChart": {
       "CompactLabelGap": "6",

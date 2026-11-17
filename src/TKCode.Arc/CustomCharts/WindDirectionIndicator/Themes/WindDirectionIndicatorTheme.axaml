@@ -1,0 +1,23 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+                    x:Class="TKCode.Arc.WindDirectionIndicatorTheme"
+                    x:ClassModifier="internal">
+    <!-- 自绘控件无需 ControlTemplate；主题负责提供几何、字体和动效跟踪配置。
+         字典类与按需加载注册由生成器提供，不需要另写同名后台类。 -->
+    <ControlTheme x:Key="{x:Type arc:WindDirectionIndicator}" TargetType="arc:WindDirectionIndicator">
+        <Setter Property="arc:ArcMotion.Tracks" Value="True" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <!-- TokenResource 是动态资源绑定，应用覆盖令牌后会更新控件属性。 -->
+        <Setter Property="DialWidth" Value="{arc:WindDirectionIndicatorTokenResource DialWidth}" />
+        <Setter Property="DialHeight" Value="{arc:WindDirectionIndicatorTokenResource DialHeight}" />
+        <Setter Property="NeedleLength" Value="{arc:WindDirectionIndicatorTokenResource NeedleLength}" />
+        <Setter Property="NeedleWidth" Value="{arc:WindDirectionIndicatorTokenResource NeedleWidth}" />
+        <Setter Property="RingWidth" Value="{arc:WindDirectionIndicatorTokenResource RingWidth}" />
+        <Setter Property="OutlineThickness" Value="{arc:WindDirectionIndicatorTokenResource OutlineThickness}" />
+        <!-- 字重也属于全局主题；不能用固定字重覆盖应用的字体选择。 -->
+        <Setter Property="MediumFontWeight" Value="{arc:ArcDesignTokenResource WeightMedium}" />
+        <Setter Property="RegularFontWeight" Value="{arc:ArcDesignTokenResource WeightRegular}" />
+    </ControlTheme>
+</ResourceDictionary>

@@ -3,6 +3,29 @@
 All notable changes to TKCode.Arc are listed here. Versions follow [Semantic Versioning](https://semver.org/);
 from 1.0.0 on, breaking API changes come only with a new major version. Earlier `-preview` versions could change the API between releases.
 
+## Unreleased
+
+### Added
+
+- `WindDirectionIndicator` in `TKCode.Arc` (CustomCharts): a read-only meteorological wind-origin compass with
+  two compass rings, 16 external angle labels, eight inner directions, four triangular markers, a solid
+  concave-tail pointer, an optional direction reading, and explicit calm/missing-data states. Wind speed
+  belongs in a separate readout. This component's initial API has not been published. The arrow takes
+  the shortest path across north using Arc motion; actual text updates immediately. Geometry tokens,
+  dynamic ArcDesign colors and font weights, read-only accessibility, tests and three-language Gallery
+  documentation are included.
+
+- `Thermometer` in `TKCode.Arc` (CustomCharts): a read-only temperature meter with a spring-driven liquid column,
+  configurable range and thresholds, scale, display unit and localized state labels. Its geometry is controlled by
+  `ThermometerToken`; colors and fonts follow ArcDesign tokens. The actual reading and `State` update immediately,
+  while only the liquid animates; Reduced and Off motion land on the target. Includes range-value accessibility,
+  headless tests and the companion ArcGallery demo and documentation. The stem and bulb share a continuous,
+  smoothly joined outline; the liquid is one clipped shape with no overlapping circular seam. Label/readout and
+  state/scale weights follow ArcDesign `WeightMedium` and `WeightRegular`. `DialWidth` and `DialHeight` bound
+  the display size with one uniform scale shared by measurement and drawing, including non-proportional overrides.
+  Maximum readings fill the liquid's rounded cap; the scale uses the same complete interior height. The Gallery
+  shows one interactive thermometer, without the two static comparison meters.
+
 NuGet packages published with each release: `TKCode.Arc`, `TKCode.Arc.Core`, `TKCode.Arc.Foundation` (from 0.3.2),
 `TKCode.Arc.Fonts`, `TKCode.Arc.Icons.Lucide`, `TKCode.Arc.Blocks`, `TKCode.Arc.AdvancedCharts`, `TKCode.Arc.Special`,
 `TKCode.Arc.Workflow`, `TKCode.Arc.Dock` (from 0.4.0-preview.2), `TKCode.Arc.Themes.Pixel`, `TKCode.Arc.Themes.Corners`, `TKCode.Arc.Mobile`, `TKCode.Arc.Terminal`, `TKCode.Arc.Audio`,
