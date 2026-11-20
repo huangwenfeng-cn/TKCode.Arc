@@ -105,6 +105,15 @@ public partial class DataGrid
     /// <summary>The grid's keyboard model (the grid body has focus; the editor and inputs handle their own keys).</summary>
     internal void HandleGridKey(KeyEventArgs e)
     {
+        if (IsCellCommitPending)
+        {
+            e.Handled = true;
+            if (e.Key == Key.Escape)
+            {
+                CancelEditFromEditor();
+            }
+            return;
+        }
         var hotkeys = Application.Current?.PlatformSettings?.HotkeyConfiguration;
         var command = (e.KeyModifiers & (hotkeys?.CommandModifiers ?? KeyModifiers.Control)) != 0;
         var shift = (e.KeyModifiers & KeyModifiers.Shift) != 0;

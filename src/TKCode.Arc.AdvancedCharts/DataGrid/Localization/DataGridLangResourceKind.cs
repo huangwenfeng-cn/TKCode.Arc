@@ -188,5 +188,8 @@ public enum DataGridLangResourceKind
     ReplacePlaceholder,
     ReplacedCellsOne,
     ReplacedCellsOther,
-    ToggleReplace
+    ToggleReplace,
+    CellSaving,
+    CellSaved,
+    CellSaveFailed
 }

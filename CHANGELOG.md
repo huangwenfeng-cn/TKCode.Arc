@@ -5,7 +5,47 @@ from 1.0.0 on, breaking API changes come only with a new major version. Earlier 
 
 ## Unreleased
 
+### Fixed
+
+- `LevelIndicator`: remove the extra surface stroke that extended beyond the rounded vessel at full
+  scale and left a false liquid line in an empty vessel. The clipped rounded fill now defines the surface.
+
 ### Added
+
+- `DataGrid`: optional `IDataGridEditableDataSource` single-cell persistence, `CommitEditAsync()` and
+  read-only `IsCellCommitPending`. Reuses existing editors, blocking validation and pre-edit cancellation;
+  publishes authoritative values only after success and reloads the server query. Failed writes keep the
+  draft; cancellation and source/query/column/template changes discard late results. No automatic retry,
+  remote bulk writes or local undo. Existing read-only sources and local editing remain supported.
+
+- `LinearGauge` in CustomCharts: a read-only vertical range meter with a narrow bar, scale,
+  threshold marks, configurable decimal places and measurement quality. Normal readings use the
+  theme accent by default. Includes dynamic theme resources, read-only automation and three-language
+  Gallery documentation with force, pressure and speed examples. Shares robust range mapping and
+  rounded bar clipping with `LevelIndicator`; existing public APIs remain unchanged.
+
+- `LevelIndicator` in `TKCode.Arc` (CustomCharts): a read-only level meter that fills a vessel with a
+  spring-driven liquid column beside a scale, with configurable range and thresholds, a display unit and
+  localized low/normal/high or invalid-range labels. `Quality` from the shared `MeasurementQuality` hides
+  the liquid and replaces the reading with a dash while preserving `Value` and the threshold `State`.
+  Geometry is controlled by `LevelIndicatorToken`; the vessel corner radius follows the ArcDesign
+  `RadiusControl` token, and colors and fonts follow ArcDesign tokens. Only the liquid animates; Reduced
+  and Off motion land on the target and recovery lands immediately. Includes read-only range-value and
+  textual accessibility, headless tests and three-language Gallery documentation. Device communication,
+  timeout decisions and alarm logic remain application-owned.
+
+- Shared `MeasurementQuality` and application-bound `Quality` on `Thermometer` and
+  `WindDirectionIndicator`, defaulting to Good for existing usages. NoData, Stale and Error
+  hide measured graphics and current numbers, with localized/custom text; recovery lands immediately.
+  Wind `HasData=false` retains priority over quality and calm. Thermometer `Value`, threshold `State`
+  and numeric range accessibility retain their stored-value contracts; textual accessibility reports
+  quality. Controls do not infer timeouts or communicate with devices.
+
+- `StatusIndicator` in `TKCode.Arc` (CustomCharts): a read-only device status lamp with six
+  application-provided states, localized or custom status text, a read-only automation value and
+  optional one-second blinking under Full motion. Reduced and Off remain steady; status color and text
+  update immediately. Includes dynamic geometry and ArcDesign resources, headless tests and three-language
+  Gallery documentation. Device communication, alarm decisions and operation requests remain application-owned.
 
 - `WindDirectionIndicator` in `TKCode.Arc` (CustomCharts): a read-only meteorological wind-origin compass with
   two compass rings, 16 external angle labels, eight inner directions, four triangular markers, a solid

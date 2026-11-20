@@ -77,9 +77,15 @@ internal sealed class DataGridBodyAutomationPeer : ControlAutomationPeer, IValue
     {
         get
         {
-            if (!_grid.HasCells || _grid.HasDataSource)
+            if (!_grid.HasCells)
             {
                 return true;
+            }
+            if (_grid.HasDataSource)
+            {
+                // 可编辑远程源通过原来的值模式进入统一提交；未加载、只读或正在保存的单元格仍只读。
+                // 本地分支保留原契约，不在这次新增能力中改变它的自动化判断。
+                return !_grid.IsCellEditable(_grid.Anchor.Row, _grid.VisibleAccessors[_grid.Anchor.Column]);
             }
             var column = _grid.ColumnOf(_grid.VisibleAccessors[_grid.Anchor.Column]);
             return !column.IsEditable;

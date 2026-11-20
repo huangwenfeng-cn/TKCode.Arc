@@ -663,6 +663,8 @@ internal sealed class DataGridViewport : Control, ILogicalScrollable
 
     internal void MarkEditorInvalid() => _editorLayer.MarkInvalid();
 
+    internal void SetEditorCommitPending(bool pending) => _editorLayer.SetCommitPending(pending);
+
     internal void FocusGrid() => Focus(NavigationMethod.Pointer);
 
     #endregion

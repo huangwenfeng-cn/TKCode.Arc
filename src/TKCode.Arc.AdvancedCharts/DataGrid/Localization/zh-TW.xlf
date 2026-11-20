@@ -1105,5 +1105,8 @@
         <target state="translated">取消固定</target>
       </segment>
     </unit>
+    <unit id="CellSaving"><segment><source>Saving cell…</source><target>正在儲存儲存格…</target></segment></unit>
+    <unit id="CellSaved"><segment><source>Cell saved</source><target>儲存格已儲存</target></segment></unit>
+    <unit id="CellSaveFailed"><segment><source>Could not save cell. Your draft is kept; check the server before retrying.</source><target>儲存格儲存失敗，草稿已保留；請確認伺服器狀態後再重試。</target></segment></unit>
   </file>
 </xliff>

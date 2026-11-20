@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xliff version="2.1" srcLang="en-US" trgLang="zh-TW" xmlns="urn:oasis:names:tc:xliff:document:2.0">
   <file id="TKCode.Arc.Localization.WindDirectionIndicatorLangResourceKind">
+    <unit id="Stale"><segment><source>Stale data</source><target>資料過期</target></segment></unit>
+    <unit id="Error"><segment><source>Collection error</source><target>擷取異常</target></segment></unit>
     <unit id="North"><segment><source>N</source><target>北</target></segment></unit>
     <unit id="NorthNortheast"><segment><source>NNE</source><target>北東北</target></segment></unit>
     <unit id="Northeast"><segment><source>NE</source><target>東北</target></segment></unit>

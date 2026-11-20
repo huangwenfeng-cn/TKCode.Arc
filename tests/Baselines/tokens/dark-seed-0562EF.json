@@ -4443,6 +4443,12 @@
       "RingThickness": "6",
       "TableHeight": "440"
     },
+    "LevelIndicator": {
+      "DialHeight": "360",
+      "DialWidth": "220",
+      "OutlineThickness": "1.5",
+      "VesselWidth": "130"
+    },
     "LightboxGallery": {
       "ArrowMargin": "16,16,16,16",
       "BackdropColor": "#F00B0B0D",
@@ -4483,6 +4489,12 @@
       "SwatchWidth": "20",
       "TitleLineHeight": "24",
       "TransportGap": "16"
+    },
+    "LinearGauge": {
+      "DialHeight": "360",
+      "DialWidth": "220",
+      "OutlineThickness": "1.5",
+      "TrackWidth": "36"
     },
     "LinkUnfurl": {
       "CardCornerRadius": "18,18,18,18",
@@ -8358,6 +8370,10 @@
       "FigureMargin": "0,0,0,20",
       "VisualHeight": "56",
       "VisualMargin": "0,32,0,0"
+    },
+    "StatusIndicator": {
+      "Diameter": "16",
+      "LabelGap": "8"
     },
     "Stepper": {
       "CaptionMargin": "0,12,0,0",

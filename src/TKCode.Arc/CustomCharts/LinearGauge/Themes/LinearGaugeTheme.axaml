@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+                    x:ClassModifier="internal"
+                    x:Class="TKCode.Arc.LinearGaugeTheme">
+    <!-- 柱条是自绘几何，主题负责动态资源，控件负责数值映射及文字缓存。
+         圆角和字重来自 ArcDesign，不在组件 Token 中复制一套。 -->
+    <ControlTheme x:Key="{x:Type arc:LinearGauge}" TargetType="arc:LinearGauge">
+        <Setter Property="arc:ArcMotion.Tracks" Value="True" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="DialWidth" Value="{arc:LinearGaugeTokenResource DialWidth}" />
+        <Setter Property="DialHeight" Value="{arc:LinearGaugeTokenResource DialHeight}" />
+        <Setter Property="TrackWidth" Value="{arc:LinearGaugeTokenResource TrackWidth}" />
+        <Setter Property="OutlineThickness" Value="{arc:LinearGaugeTokenResource OutlineThickness}" />
+        <Setter Property="TrackCornerRadius" Value="{arc:ArcDesignTokenResource RadiusControl}" />
+        <Setter Property="MediumFontWeight" Value="{arc:ArcDesignTokenResource WeightMedium}" />
+        <Setter Property="RegularFontWeight" Value="{arc:ArcDesignTokenResource WeightRegular}" />
+    </ControlTheme>
+</ResourceDictionary>

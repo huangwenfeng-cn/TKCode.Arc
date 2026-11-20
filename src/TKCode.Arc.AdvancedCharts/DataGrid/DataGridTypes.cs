@@ -335,3 +335,16 @@ public interface IDataGridDataSource
     /// <summary>Returns one block; sort, filter and search the whole data set on the server.</summary>
     Task<DataGridRowsResult> GetRowsAsync(DataGridRowsRequest request, CancellationToken cancellation);
 }
+
+/// <summary>Optional single-cell persistence for a server-backed <see cref="DataGrid"/>.</summary>
+/// <remarks>
+/// Return a replacement row with the same stable key after persistence succeeds. Do not mutate the supplied row.
+/// Throw to reject a write. The grid reloads the current query after success and never retries automatically.
+/// Cancellation only discards the UI result; it does not guarantee that the server did not write.
+/// Bulk writes and local undo are not supported for server rows.
+/// </remarks>
+public interface IDataGridEditableDataSource : IDataGridDataSource
+{
+    /// <summary>Persists one proposed change and returns the authoritative replacement row with the same key.</summary>
+    Task<object> UpdateCellAsync(DataGridCellChange change, CancellationToken cancellation);
+}

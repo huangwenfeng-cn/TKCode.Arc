@@ -21,6 +21,9 @@ internal sealed class DataGridEditState
 
     public bool Invalid { get; set; }
 
+    // 记录编辑开始时的数据模式；数据源被替换为 null 后也能识别并关闭旧远程编辑器。
+    public bool IsRemote { get; init; }
+
     /// <summary>The value being edited by a column's <see cref="DataGridColumn.EditTemplate"/>; null for the text editor.</summary>
     public DataGridEditContext? Context { get; set; }
 
@@ -47,23 +50,36 @@ public partial class DataGrid
         }
     }
 
-    /// <summary>Commits the open editor, as Enter does without moving.</summary>
-    public bool CommitEdit() => _edit is null || CommitEdit(null, null);
+    /// <summary>Commits the open editor; returns false while a server write is pending or when validation refuses it.</summary>
+    public bool CommitEdit() => _remoteCommit is null && (_edit is null || CommitEdit(null, null));
 
-    /// <summary>Closes the open editor without writing.</summary>
+    /// <summary>Commits the open editor and awaits server confirmation; returns false on rejection, failure or cancellation.</summary>
+    public Task<bool> CommitEditAsync()
+    {
+        // 本地路径仍同步完成；远程路径返回同一个任务，工具栏和 Enter 同时提交也不会发送两次。
+        var committed = CommitEdit();
+        return _remoteCommit?.Completion.Task ?? Task.FromResult(committed);
+    }
+
+    /// <summary>Closes the editor and cancels a pending UI commit; the server may already have persisted the write.</summary>
     public void CancelEdit()
     {
-        if (_edit is null)
+        if (_edit is { } edit)
         {
-            return;
+            // 先关闭草稿再发布 pending=false；绑定回调此时开启的新编辑不属于这次取消。
+            edit.Done = true;
+            CloseEditor();
         }
-        _edit.Done = true;
-        CloseEditor();
+        CancelRemoteCommit();
     }
 
     /// <summary>Opens the editor; <paramref name="text"/> replaces the value (enter mode), null keeps it (edit mode).</summary>
     internal void BeginEdit(DataGridCellAddress address, string? text, bool openList)
     {
+        if (_remoteCommit is not null)
+        {
+            return;
+        }
         if (_edit is not null)
         {
             if (!CommitEdit(null, null))
@@ -71,7 +87,7 @@ public partial class DataGrid
                 return;
             }
         }
-        if (HasDataSource)
+        if (HasDataSource && DataSource is not IDataGridEditableDataSource)
         {
             Say(DataGridText.Get(DataGridLangResourceKind.GridReadOnly));
             return;
@@ -80,16 +96,16 @@ public partial class DataGrid
         var accessor = VisibleAccessors[address.Column];
         var column = ColumnOf(accessor);
         var source = SourceOfRow(address.Row);
-        if (source < 0)
+        if (!HasDataSource && source < 0 || HasDataSource && DataSourceItem(address.Row) is null)
         {
             return;
         }
-        if (!column.IsEditable || !_store.CanWrite(source, accessor))
+        if (!column.IsEditable || !HasDataSource && !_store.CanWrite(source, accessor))
         {
             Say(DataGridText.Format(DataGridLangResourceKind.ColumnReadOnly, column.Header));
             return;
         }
-        if (!CellAllowed(source, accessor))
+        if (!(HasDataSource ? RemoteCellAllowed(address.Row, accessor) : CellAllowed(source, accessor)))
         {
             Say(DataGridText.Get(DataGridLangResourceKind.CellReadOnly));
             return;
@@ -115,30 +131,36 @@ public partial class DataGrid
             Row = address.Row,
             Column = address.Column,
             Accessor = accessor,
-            RowKey = _store.KeyAt(source),
-            EnterMode = text is not null
+            RowKey = HasDataSource ? DataSourceKey(address.Row)! : _store.KeyAt(source),
+            EnterMode = text is not null,
+            IsRemote = HasDataSource
         };
         IsEditing = true;
         UpdatePseudoClasses();
         if (column.EditTemplate is { } template)
         {
-            var current = _store.Value(source, accessor);
-            _edit.Context = new DataGridEditContext(this, _store.ItemAt(source), column, current, FormatValue(current, accessor));
+            var current = ValueAt(address.Row, accessor);
+            var item = HasDataSource ? DataSourceItem(address.Row)! : _store.ItemAt(source);
+            _edit.Context = new DataGridEditContext(this, item, column, current, FormatValue(current, accessor));
             Viewport.OpenTemplateEditor(_edit, template, DataGridText.Format(DataGridLangResourceKind.EditorLabel, column.Header, RowName(address.Row)));
             return;
         }
-        var draft = text ?? EditText(_store.Value(source, accessor));
+        var draft = text ?? EditText(ValueAt(address.Row, accessor));
         var list = openList || text is not null && column.Type is DataGridColumnType.Select or DataGridColumnType.Date;
         Viewport.OpenEditor(_edit, column, draft, list, OptionsOf(accessor),
             DataGridText.Format(DataGridLangResourceKind.EditorLabel, column.Header, RowName(address.Row)));
     }
 
-    /// <summary>Whether edits to a cell are accepted: not with a data source, and not in a read-only column or cell.</summary>
+    /// <summary>Whether the source, column and cell allow a single-cell edit.</summary>
     internal bool IsCellEditable(int row, int accessor)
     {
-        if (HasDataSource || accessor < 0 || accessor >= _store.Accessors.Length || !ColumnOf(accessor).IsEditable)
+        if (_remoteCommit is not null || accessor < 0 || accessor >= _store.Accessors.Length || !ColumnOf(accessor).IsEditable)
         {
             return false;
+        }
+        if (HasDataSource)
+        {
+            return DataSource is IDataGridEditableDataSource && RemoteCellAllowed(row, accessor);
         }
         var source = SourceOfRow(row);
         return source >= 0 && _store.CanWrite(source, accessor) && CellAllowed(source, accessor);
@@ -146,14 +168,13 @@ public partial class DataGrid
 
     /// <summary>
     /// Writes one cell the way a committed edit does: <see cref="CellEditEnding"/> may refuse it, then it is one undo step and
-    /// raises <see cref="CellsChanged"/>. Returns whether the cell changed.
+    /// raises <see cref="CellsChanged"/>. Server writes await confirmation without local undo; false also means pending.
     /// </summary>
     internal bool SetCellValue(int row, int accessor, object? value)
     {
         if (HasDataSource)
         {
-            Say(DataGridText.Get(DataGridLangResourceKind.GridReadOnly));
-            return false;
+            return SetRemoteCellValue(row, accessor, value);
         }
         var column = ColumnOf(accessor);
         var source = SourceOfRow(row);
@@ -223,15 +244,21 @@ public partial class DataGrid
     /// </summary>
     internal bool CommitEdit((int Rows, int Columns)? move, string? picked)
     {
+        if (_remoteCommit is not null)
+        {
+            return false;
+        }
         var edit = _edit;
         if (edit is null || edit.Done)
         {
             return true;
         }
         var column = ColumnOf(edit.Accessor);
+        // 远程行以缓存快照读取，本地行仍以稳定键定位 store，原来的同步写入路径保持独立。
         var text = picked ?? Viewport.EditorText;
         var source = _store.IndexOfKey(edit.RowKey);
-        if (source < 0)
+        var item = HasDataSource ? DataSourceItem(edit.Row) : source >= 0 ? _store.ItemAt(source) : null;
+        if (item is null || HasDataSource && !Equals(DataSourceKey(edit.Row), edit.RowKey))
         {
             edit.Done = true;
             CloseEditor();
@@ -264,20 +291,29 @@ public partial class DataGrid
             });
             return false;
         }
-        var old = _store.Value(source, edit.Accessor);
+        var old = HasDataSource ? DataSourceValue(edit.Row, edit.Accessor) : _store.Value(source, edit.Accessor);
         if (!SameValue(old, value))
         {
-            if (ValidationMode == DataGridValidationMode.Block && Validate(_store.ItemAt(source), edit.RowKey, edit.Accessor, value) is { } invalid)
+            if (ValidationMode == DataGridValidationMode.Block && Validate(item, edit.RowKey, edit.Accessor, value) is { } invalid)
             {
                 RefuseEdit(edit, invalid);
                 return false;
             }
-            var args = new DataGridCellEditEndingEventArgs(CellEditEndingEvent, _store.ItemAt(source), edit.RowKey, column, old, value);
+            var args = new DataGridCellEditEndingEventArgs(CellEditEndingEvent, item, edit.RowKey, column, old, value);
             RaiseEvent(args);
+            if (edit.IsRemote && !ReferenceEquals(edit, _edit))
+            {
+                return false;
+            }
             if (args.Cancel)
             {
                 RefuseEdit(edit, args.ErrorMessage);
                 return false;
+            }
+            if (HasDataSource)
+            {
+                // 校验和预提交事件沿用本地顺序；网络完成前保留草稿，不能写入本地 store 或撤销栈。
+                return StartRemoteCommit(edit.Row, edit.Accessor, item, edit.RowKey, old, value, edit, move);
             }
             var row = edit.Row;
             var written = WriteCells([(source, edit.Accessor, value)], new DataGridCellRange(row, edit.Column, row, edit.Column),
@@ -311,12 +347,7 @@ public partial class DataGrid
 
     internal void CancelEditFromEditor()
     {
-        if (_edit is null)
-        {
-            return;
-        }
-        _edit.Done = true;
-        CloseEditor();
+        CancelEdit();
         Viewport.FocusGrid();
     }
 

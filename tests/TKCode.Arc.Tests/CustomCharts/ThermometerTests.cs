@@ -14,6 +14,93 @@ namespace TKCode.Arc.Tests.Charts;
 
 public class ThermometerTests
 {
+    // 测试阅读提示：先准备控件，再执行属性变化，最后用 ShouldBe 等断言核对结果。
+    // AvaloniaTheory 配合 InlineData，让同一流程分别验证三种无效质量；
+    // TestHelpers.Show 创建 headless 测试窗口，finally 保证失败时也能关闭窗口。
+    [AvaloniaTheory]
+    [InlineData(MeasurementQuality.NoData, "No data")]
+    [InlineData(MeasurementQuality.Stale, "Stale data")]
+    [InlineData(MeasurementQuality.Error, "Collection error")]
+    public void Quality_Hides_The_Measurement_Preserves_Threshold_State_And_Recovers_Immediately(
+        MeasurementQuality quality, string expected)
+    {
+        ArcLanguage.Set(LanguageTags.EnUS);
+        var meter = new Thermometer { Value = 86 };
+        var window = TestHelpers.Show(meter, ArcMotionLevel.Full);
+        try
+        {
+            ShowpieceTextRecording.Record(meter.Render).ShouldNotBeEmpty();
+            var peer = ControlAutomationPeer.CreatePeerForElement(meter);
+            meter.Value = 100;
+            meter.Quality = quality;
+            // 保存数值和阈值区间仍存在，但当前显示与辅助接口应只报告质量。
+            meter.Value.ShouldBe(100);
+            meter.State.ShouldBe(ThermometerState.High);
+            meter.HasReading.ShouldBeFalse();
+            meter.ReadingText.ShouldBe("—");
+            meter.StatusText.ShouldBe(expected);
+            peer.GetHelpText().ShouldBe(expected);
+            peer.GetProvider<IValueProvider>()!.Value.ShouldBe(expected);
+            // 数值范围接口继续保留原有保存值契约。
+            peer.GetProvider<IRangeValueProvider>()!.Value.ShouldBe(100);
+            var drawing = new DrawingGroup();
+            // 记录实际绘制指令：没有液体裁剪组，才能确认旧液柱确实没有画出来。
+            using (var context = drawing.Open())
+            {
+                meter.Render(context);
+            }
+            DrawingGroups(drawing).ShouldNotContain(group => group.ClipGeometry != null);
+            meter.Value = 40;
+            meter.Quality = MeasurementQuality.Good;
+            // 恢复首个有效样本应直接到 40 度对应的半量程位置，不能等待旧液位动画。
+            meter.HasReading.ShouldBeTrue();
+            meter.DrawnFraction.ShouldBe(.5, 1e-9);
+            meter.State.ShouldBe(ThermometerState.Normal);
+            peer.GetHelpText().ShouldContain("40");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Quality_Text_Follows_Language_Custom_Labels_And_Reattachment()
+    {
+        var meter = new Thermometer { Quality = MeasurementQuality.Stale };
+        var host = new Border { Child = meter };
+        var window = TestHelpers.Show(host);
+        try
+        {
+            ArcLanguage.Set(LanguageTags.ZhCN);
+            meter.StatusText.ShouldBe("数据过期");
+            ShowpieceTextRecording.Record(meter.Render).ShouldNotBeEmpty();
+            ArcLanguage.Set(LanguageTags.ZhTW);
+            meter.StatusText.ShouldBe("資料過期");
+            meter.StaleLabel = "Sample expired";
+            ArcLanguage.Set(LanguageTags.EnUS);
+            meter.StatusText.ShouldBe("Sample expired");
+            meter.Maximum = meter.Minimum;
+            meter.State.ShouldBe(ThermometerState.InvalidRange);
+            meter.StatusText.ShouldBe("Sample expired");
+            host.Child = null;
+            meter.Quality = MeasurementQuality.Error;
+            ArcLanguage.Set(LanguageTags.ZhCN);
+            host.Child = meter;
+            Dispatcher.UIThread.RunJobs();
+            meter.StatusText.ShouldBe("采集异常");
+            meter.ErrorLabel = "Sensor failed";
+            meter.StatusText.ShouldBe("Sensor failed");
+            meter.Quality = MeasurementQuality.NoData;
+            meter.NoDataLabel = "Waiting";
+            meter.StatusText.ShouldBe("Waiting");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaTheory]
     [InlineData(100)]
     [InlineData(125)]
@@ -229,6 +316,7 @@ public class ThermometerTests
         Should.Throw<ArgumentException>(() => meter.Minimum = double.NegativeInfinity);
         Should.Throw<ArgumentException>(() => meter.Maximum = double.PositiveInfinity);
         Should.Throw<ArgumentException>(() => meter.TickCount = 0);
+        Should.Throw<ArgumentException>(() => meter.Quality = (MeasurementQuality)99);
     }
 
     [AvaloniaFact]

@@ -44,5 +44,9 @@ public enum WindDirectionIndicatorLangResourceKind
     /// <summary>Calm wind.</summary>
     Calm,
     /// <summary>Missing measurement.</summary>
-    NoData
+    NoData,
+    /// <summary>Stale measurement.</summary>
+    Stale,
+    /// <summary>Collection error.</summary>
+    Error
 }

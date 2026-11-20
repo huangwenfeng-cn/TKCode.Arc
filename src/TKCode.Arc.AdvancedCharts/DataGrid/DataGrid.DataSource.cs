@@ -30,6 +30,7 @@ public partial class DataGrid
 
     private void OnDataSourceChanged()
     {
+        CancelEdit();
         ResetBlocks();
         _checkedItems.Clear();
         if (DataSource is null)
@@ -48,8 +49,12 @@ public partial class DataGrid
     }
 
     /// <summary>Drops every block and request; the next view asks for rows again (sort, filters or search changed).</summary>
-    internal void ResetBlocks()
+    internal void ResetBlocks(bool preserveCommit = false)
     {
+        if (!preserveCommit)
+        {
+            CancelRemoteEdit();
+        }
         CancelBlockRequests();
         _blocks.Clear();
         _queryVersion++;

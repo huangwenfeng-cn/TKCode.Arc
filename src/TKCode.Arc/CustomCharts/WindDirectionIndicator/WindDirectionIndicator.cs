@@ -31,6 +31,21 @@ public class WindDirectionIndicator : Control
     /// <summary>Whether the measurement is available (default true); false hides the arrow and all measured values.</summary>
     public static readonly StyledProperty<bool> HasDataProperty =
         AvaloniaProperty.Register<WindDirectionIndicator, bool>(nameof(HasData), true);
+    // Quality 回答“样本能否使用”，IsCalm 回答“有效样本是否为静风”，不是同一回事。
+    // HasData 是原有的可用性开关；为了兼容，它为 false 时始终显示无数据。
+    // 新应用可以绑定 Quality 区分过期和异常；如果同时绑定 HasData，恢复时两者都要恢复。
+    /// <summary>Application-provided measurement quality (default Good); other states hide the direction. HasData=false always shows no data. No timeout is inferred.</summary>
+    public static readonly StyledProperty<MeasurementQuality> QualityProperty =
+        AvaloniaProperty.Register<WindDirectionIndicator, MeasurementQuality>(nameof(Quality), MeasurementQuality.Good,
+            validate: value => value is >= MeasurementQuality.Good and <= MeasurementQuality.Error);
+    // string? 允许 null；null 使用内置语言资源，非 null 则使用应用自定义提示。
+    // 提示文字只负责显示，是否过期或采集失败仍由应用判断。
+    /// <summary>Custom stale-measurement text; null follows the application's language.</summary>
+    public static readonly StyledProperty<string?> StaleLabelProperty =
+        AvaloniaProperty.Register<WindDirectionIndicator, string?>(nameof(StaleLabel));
+    /// <summary>Custom collection-error text; null follows the application's language.</summary>
+    public static readonly StyledProperty<string?> ErrorLabelProperty =
+        AvaloniaProperty.Register<WindDirectionIndicator, string?>(nameof(ErrorLabel));
     /// <summary>Whether the application reports calm wind (default false); calm hides the arrow and direction. No calm threshold is inferred.</summary>
     public static readonly StyledProperty<bool> IsCalmProperty =
         AvaloniaProperty.Register<WindDirectionIndicator, bool>(nameof(IsCalm));
@@ -101,6 +116,12 @@ public class WindDirectionIndicator : Control
     public double Direction { get => GetValue(DirectionProperty); set => SetValue(DirectionProperty, value); }
     /// <inheritdoc cref="HasDataProperty"/>
     public bool HasData { get => GetValue(HasDataProperty); set => SetValue(HasDataProperty, value); }
+    /// <inheritdoc cref="QualityProperty"/>
+    public MeasurementQuality Quality { get => GetValue(QualityProperty); set => SetValue(QualityProperty, value); }
+    /// <inheritdoc cref="StaleLabelProperty"/>
+    public string? StaleLabel { get => GetValue(StaleLabelProperty); set => SetValue(StaleLabelProperty, value); }
+    /// <inheritdoc cref="ErrorLabelProperty"/>
+    public string? ErrorLabel { get => GetValue(ErrorLabelProperty); set => SetValue(ErrorLabelProperty, value); }
     /// <inheritdoc cref="IsCalmProperty"/>
     public bool IsCalm { get => GetValue(IsCalmProperty); set => SetValue(IsCalmProperty, value); }
     /// <inheritdoc cref="ShowReadingProperty"/>
@@ -123,13 +144,32 @@ public class WindDirectionIndicator : Control
     // 实际值用于文字和无障碍；DrawnAngle 是动画中的视觉值，两者有意分开。
     internal double NormalizedDirection => Normalize(Direction);
     internal double DrawnAngle => _angle.Value;
-    internal bool HasDirection => HasData && !IsCalm;
+    // => 每次读取时计算结果；?: 表示“条件为真取左项，否则取右项”。
+    // 优先级第一步：HasData=false 强制显示 NoData，即使 Quality 仍保存着 Stale/Error。
+    // 这里只计算显示用的有效质量，不会反向修改绑定源中的 HasData 或 Quality。
+    private MeasurementQuality EffectiveQuality => HasData ? Quality : MeasurementQuality.NoData;
+    // && 表示两个条件同时满足，! 表示取反：有效样本且非静风，才允许显示方向。
+    internal bool HasDirection => EffectiveQuality == MeasurementQuality.Good && !IsCalm;
     internal Color NeedleColor => _palette.Accent;
     internal string HeadingText => Label ?? Text(WindDirectionIndicatorLangResourceKind.WindDirection);
-    // 缺测优先于静风。四舍五入后再归一化，避免 359.99° 显示成 360°。
-    internal string ReadingText => !HasData ? NoDataLabel ?? Text(WindDirectionIndicatorLangResourceKind.NoData) :
+    // 优先级第二步：非有效质量先显示提示，Good 才进入 DirectionText 判断静风/方向。
+    // ?? 表示自定义文字为 null 时才取内置翻译；空字符串不会被自动替换。
+    internal string ReadingText => EffectiveQuality switch
+    {
+        MeasurementQuality.NoData => NoDataLabel ?? Text(WindDirectionIndicatorLangResourceKind.NoData),
+        MeasurementQuality.Stale => StaleLabel ?? Text(WindDirectionIndicatorLangResourceKind.Stale),
+        MeasurementQuality.Error => ErrorLabel ?? Text(WindDirectionIndicatorLangResourceKind.Error),
+        _ => DirectionText
+    };
+    // 优先级第三步：有效静风显示静风文字，其他有效样本显示真实角度和方位。
+    // 四舍五入后再归一化，避免 359.99° 显示成 360°；文字不采用动画中的角度。
+    private string DirectionText =>
         IsCalm ? CalmLabel ?? Text(WindDirectionIndicatorLangResourceKind.Calm) :
         $"{Normalize(Math.Round(NormalizedDirection, 1)).ToString("0.#", CultureInfo.CurrentCulture)}° · {DirectionName(NormalizedDirection)}";
+    // 过期使用主题警告色，异常使用主题危险色；颜色旁边仍有明确文字提示。
+    private Color ReadingColor => EffectiveQuality == MeasurementQuality.Stale ? _palette.Warning :
+        EffectiveQuality == MeasurementQuality.Error ? _palette.Danger :
+        HasDirection ? _palette.Foreground : _palette.TextMuted;
     private double ReferenceHeight => ShowReading ? DesignHeight : DesignWidth;
     private double InnerRadius => OuterRadius - Math.Clamp(RingWidth, 12, 22);
 
@@ -166,8 +206,10 @@ public class WindDirectionIndicator : Control
         {
             return;
         }
+        // 数值或质量变化都要同步。即使角度没变，质量从 Error 恢复为 Good，
+        // 也必须重新显示指针；不能只等待下一次 Direction 改变。
         if (change.Property == DirectionProperty || change.Property == HasDataProperty ||
-            change.Property == IsCalmProperty || change.Property == ArcMotion.LevelProperty ||
+            change.Property == IsCalmProperty || change.Property == QualityProperty || change.Property == ArcMotion.LevelProperty ||
             change.Property == ArcMotion.TokenLevelProperty)
         {
             Sync();
@@ -188,7 +230,8 @@ public class WindDirectionIndicator : Control
         }
         else if (change.Property == DirectionProperty || change.Property == HasDataProperty ||
                  change.Property == IsCalmProperty || change.Property == CalmLabelProperty ||
-                 change.Property == NoDataLabelProperty)
+                 change.Property == NoDataLabelProperty || change.Property == QualityProperty ||
+                 change.Property == StaleLabelProperty || change.Property == ErrorLabelProperty)
         {
             RefreshReading();
         }
@@ -226,6 +269,9 @@ public class WindDirectionIndicator : Control
 
     private void Sync()
     {
+        // _hadDirection 保存上一次的有效性，不是永久的“收到过数据”标记。
+        // 例如先收到 45°，随后过期，再收到 270°：恢复时直接指向 270°，
+        // 不从旧的 45° 播放动画，以免把过渡角度误当成当前样本。
         // 模板 Transition 无法表达角度展开和从当前视觉位置求最短路径，因此使用 MotionValue。
         // 仅连续有效采样且 Full 动效时播放弹簧；首次、恢复、Reduced/Off 都直接跳到实际值。
         if (HasDirection && _hadDirection && IsLoaded && ArcMotion.IsFull(this))
@@ -264,8 +310,26 @@ public class WindDirectionIndicator : Control
     }
 
     private ChartsBRun CreateReadingRun()
-        => ChartsBText.TrimmedRun(ReadingText, _palette, _palette.TypeSM,
-            HasDirection ? _palette.Foreground : _palette.TextMuted, HasDirection ? 300 : 140, RegularFontWeight);
+    {
+        // 判断是否采用内置质量文案。只有相应 Label 为 null 时才是内置文字，
+        // 它们长度可控；自定义长句仍使用原有的宽度限制和省略规则。
+        var builtInQualityText = EffectiveQuality switch
+        {
+            MeasurementQuality.NoData => NoDataLabel is null,
+            MeasurementQuality.Stale => StaleLabel is null,
+            MeasurementQuality.Error => ErrorLabel is null,
+            _ => false
+        };
+        // 内置质量文案可换行，避免英语状态被中心区域的单行省略规则截断。
+        // 自定义文案长度不受控，继续保留原来的省略规则，防止覆盖刻度和方位。
+        // Typeface 是字体与字重组合，TypeXS 是主题小字号；140 是参考坐标下的
+        // 中心文字宽度，不是最终屏幕像素。整体缩放时字体与罗盘一起缩放。
+        return builtInQualityText ?
+            new ChartsBRun(ReadingText, new Typeface(_palette.BodyFont, FontStyle.Normal, RegularFontWeight),
+                _palette.TypeXS, _palette.Brush(ReadingColor), 140, wrap: true) :
+            ChartsBText.TrimmedRun(ReadingText, _palette, _palette.TypeSM,
+                ReadingColor, HasDirection ? 300 : 140, RegularFontWeight);
+    }
 
     private void RefreshReading()
     {

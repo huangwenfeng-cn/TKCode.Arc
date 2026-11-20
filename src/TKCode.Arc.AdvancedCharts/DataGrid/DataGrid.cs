@@ -173,7 +173,8 @@ public partial class DataGrid : TemplatedControl
 
     /// <summary>
     /// Loads rows from a server one block at a time as people scroll, instead of <see cref="ItemsSource"/>. The grid is
-    /// then read only, does not group, hides Select all and exports only checked rows.
+    /// read only unless the source implements <see cref="IDataGridEditableDataSource"/>, does not group,
+    /// hides Select all and exports only checked rows.
     /// </summary>
     public static readonly StyledProperty<IDataGridDataSource?> DataSourceProperty =
         AvaloniaProperty.Register<DataGrid, IDataGridDataSource?>(nameof(DataSource));
@@ -217,6 +218,10 @@ public partial class DataGrid : TemplatedControl
     /// <summary>Whether a cell editor is open.</summary>
     public static readonly DirectProperty<DataGrid, bool> IsEditingProperty =
         AvaloniaProperty.RegisterDirect<DataGrid, bool>(nameof(IsEditing), o => o.IsEditing);
+
+    /// <summary>Whether one server cell write is awaiting confirmation.</summary>
+    public static readonly DirectProperty<DataGrid, bool> IsCellCommitPendingProperty =
+        AvaloniaProperty.RegisterDirect<DataGrid, bool>(nameof(IsCellCommitPending), o => o.IsCellCommitPending);
 
     /// <summary>Raised before an edit is written; cancel it to keep the editor open with an error.</summary>
     public static readonly RoutedEvent<DataGridCellEditEndingEventArgs> CellEditEndingEvent =
@@ -355,6 +360,7 @@ public partial class DataGrid : TemplatedControl
     private DataGridCellRange? _selectedRange;
     private int _visibleRowCount;
     private bool _isEditing;
+    private bool _isCellCommitPending;
 
     /// <inheritdoc cref="CanUndoProperty"/>
     public bool CanUndo { get => _canUndo; private set => SetAndRaise(CanUndoProperty, ref _canUndo, value); }
@@ -373,6 +379,9 @@ public partial class DataGrid : TemplatedControl
 
     /// <inheritdoc cref="IsEditingProperty"/>
     public bool IsEditing { get => _isEditing; private set => SetAndRaise(IsEditingProperty, ref _isEditing, value); }
+
+    /// <inheritdoc cref="IsCellCommitPendingProperty"/>
+    public bool IsCellCommitPending { get => _isCellCommitPending; private set => SetAndRaise(IsCellCommitPendingProperty, ref _isCellCommitPending, value); }
 
     /// <inheritdoc cref="CellEditEndingEvent"/>
     public event EventHandler<DataGridCellEditEndingEventArgs>? CellEditEnding
@@ -627,6 +636,7 @@ public partial class DataGrid : TemplatedControl
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
+        CancelRemoteEdit();
         base.OnApplyTemplate(e);
         if (_scroll is not null)
         {
@@ -677,6 +687,7 @@ public partial class DataGrid : TemplatedControl
             _languages = null;
         }
         CancelBlockRequests();
+        CancelRemoteEdit();
         _attached = false;
         _store.Detach();
         FollowColumns();
@@ -722,6 +733,11 @@ public partial class DataGrid : TemplatedControl
         var property = change.Property;
         if (property == ItemsSourceProperty || property == RowKeySelectorProperty)
         {
+            if (property == RowKeySelectorProperty && HasDataSource)
+            {
+                // 行键属于缓存身份。切换选择器后，旧读取和旧编辑都不能继续沿用原来的键。
+                ResetBlocks();
+            }
             OnItemsSourceChanged();
         }
         else if (property == SortDescriptionsProperty)

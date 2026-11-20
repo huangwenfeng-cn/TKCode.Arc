@@ -3,6 +3,9 @@
                     xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
                     x:ClassModifier="internal"
                     x:Class="TKCode.Arc.ThermometerTheme">
+    <!-- 自绘温度计没有 ControlTemplate，这里只负责给 C# 属性提供主题默认值。
+         TokenResource 是动态资源：改变主题/尺寸/字重时自动更新对应属性，
+         C# 再据此重新布局或刷新缓存；这里不保存采样数值和质量。 -->
     <ControlTheme x:Key="{x:Type arc:Thermometer}" TargetType="arc:Thermometer">
         <Setter Property="arc:ArcMotion.Tracks" Value="True" />
         <Setter Property="HorizontalAlignment" Value="Center" />

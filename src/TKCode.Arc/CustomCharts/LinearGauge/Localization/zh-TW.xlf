@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="2.1" srcLang="en-US" trgLang="zh-TW" xmlns="urn:oasis:names:tc:xliff:document:2.0">
+  <file id="TKCode.Arc.Localization.LinearGaugeLangResourceKind">
+    <unit id="NoData"><segment><source>No data</source><target>無資料</target></segment></unit>
+    <unit id="Stale"><segment><source>Stale data</source><target>資料過期</target></segment></unit>
+    <unit id="Error"><segment><source>Collection error</source><target>採集異常</target></segment></unit>
+    <unit id="Low"><segment><source>Low</source><target>偏低</target></segment></unit>
+    <unit id="Normal"><segment><source>Normal</source><target>正常</target></segment></unit>
+    <unit id="High"><segment><source>High</source><target>偏高</target></segment></unit>
+    <unit id="InvalidRange"><segment><source>Invalid range</source><target>量程設定錯誤</target></segment></unit>
+  </file>
+</xliff>

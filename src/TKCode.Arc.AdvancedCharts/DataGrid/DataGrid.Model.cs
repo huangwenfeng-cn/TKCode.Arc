@@ -93,6 +93,7 @@ public partial class DataGrid
 
     internal void InvalidateColumns()
     {
+        CancelRemoteEdit();
         _columnsDirty = true;
         _layoutWidth = double.NaN;
         InvalidateOptions();

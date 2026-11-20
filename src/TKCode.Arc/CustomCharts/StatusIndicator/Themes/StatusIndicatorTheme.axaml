@@ -1,0 +1,75 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+                    x:Class="TKCode.Arc.StatusIndicatorTheme"
+                    x:ClassModifier="internal">
+    <!-- ControlTheme 给 StatusIndicator 提供默认外观；Setter 给属性设置主题默认值。
+         ArcDesignTokenResource/StatusIndicatorTokenResource 会跟随主题资源更新，
+         因此切换深浅色或修改尺寸时，不需要在业务代码中逐个重设灯的颜色和大小。 -->
+    <ControlTheme x:Key="{x:Type arc:StatusIndicator}" TargetType="arc:StatusIndicator">
+        <Setter Property="arc:ArcMotion.Tracks" Value="True" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{arc:ArcDesignTokenResource Foreground}" />
+        <Setter Property="FontFamily" Value="{arc:ArcDesignTokenResource BodyFontFamily}" />
+        <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeSM}" />
+        <Setter Property="FontWeight" Value="{arc:ArcDesignTokenResource WeightMedium}" />
+        <!-- Template 定义灯与文字的结构。PART_Lamp 是灯，PART_Label 是状态文字。
+             TemplateBinding 从外层控件读取 DisplayText/ShowLabel；
+             Spacing 是灯和文字的间距，Width/Height 共用 Diameter，灯才不会变成椭圆。 -->
+        <Setter Property="Template">
+            <ControlTemplate TargetType="arc:StatusIndicator">
+                <StackPanel Orientation="Horizontal" Spacing="{arc:StatusIndicatorTokenResource LabelGap}">
+                    <Border Name="PART_Lamp"
+                            Width="{arc:StatusIndicatorTokenResource Diameter}"
+                            Height="{arc:StatusIndicatorTokenResource Diameter}"
+                            CornerRadius="{arc:ArcDesignTokenResource RadiusPill}"
+                            BorderBrush="{arc:ArcDesignTokenResource Border}"
+                            BorderThickness="{arc:ArcDesignTokenResource EdgeThickness}"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AccessibilityView="Raw" />
+                    <TextBlock Name="PART_Label"
+                               Text="{TemplateBinding DisplayText}"
+                               IsVisible="{TemplateBinding ShowLabel}"
+                               VerticalAlignment="Center"
+                               AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+        <!-- 颜色即时切换，真实告警不受动效延迟；文字始终保留，闪烁仅作用于灯。 -->
+        <!-- 选择器中 ^ 表示当前状态灯，/template/ 表示进入它的模板，
+             Border#PART_Lamp 表示找到命名的灯。默认背景用于 Unknown；
+             下面带 :offline 等伪类的规则覆盖相应状态的颜色。 -->
+        <Style Selector="^ /template/ Border#PART_Lamp">
+            <Setter Property="Background" Value="{arc:ArcDesignTokenResource SurfaceMuted}" />
+        </Style>
+        <Style Selector="^:offline /template/ Border#PART_Lamp">
+            <Setter Property="Background" Value="{arc:ArcDesignTokenResource TextMuted}" />
+        </Style>
+        <Style Selector="^:idle /template/ Border#PART_Lamp">
+            <Setter Property="Background" Value="{arc:ArcDesignTokenResource Accent}" />
+        </Style>
+        <Style Selector="^:running /template/ Border#PART_Lamp">
+            <Setter Property="Background" Value="{arc:ArcDesignTokenResource Success}" />
+        </Style>
+        <Style Selector="^:warning /template/ Border#PART_Lamp">
+            <Setter Property="Background" Value="{arc:ArcDesignTokenResource Warning}" />
+        </Style>
+        <Style Selector="^:fault /template/ Border#PART_Lamp">
+            <Setter Property="Background" Value="{arc:ArcDesignTokenResource Danger}" />
+        </Style>
+        <!-- 必须同时请求闪烁且动效等级为 Full 才应用动画。
+             一秒内透明度从 1 到 0.35 再回到 1，Infinite 表示循环；
+             Reduced/Off 不匹配此规则，所以保持常亮，文字本身不会闪烁。 -->
+        <Style Selector="^:blinking:motion-full /template/ Border#PART_Lamp">
+            <Style.Animations>
+                <Animation Duration="0:0:1" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1" /></KeyFrame>
+                    <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35" /></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1" /></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>

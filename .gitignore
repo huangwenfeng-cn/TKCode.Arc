@@ -40,8 +40,12 @@ __pycache__/
 src/TKCode.Arc.Terminal/runtimes/
 src/TKCode.Arc.Audio.Native/runtimes/
 
-# Local agent skills
-/.agents/
+# Track project conventions and adapted skills; leave other local agent files ignored.
+/.agents/*
+!/.agents/AGENTS.md
+!/.agents/implementation-guide.md
+!/.agents/AtomUI规范适配说明.md
+!/.agents/skills/
 src/TKCode.Arc.Video.Native/runtimes/
 
 # PDFium for TKCode.Arc.Pdf.Native (tools/pdf/sync-native.sh)

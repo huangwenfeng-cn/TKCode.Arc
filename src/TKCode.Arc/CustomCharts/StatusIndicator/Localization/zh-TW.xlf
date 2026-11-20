@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="2.1" srcLang="en-US" trgLang="zh-TW" xmlns="urn:oasis:names:tc:xliff:document:2.0">
+  <file id="TKCode.Arc.Localization.StatusIndicatorLangResourceKind">
+    <unit id="DeviceStatus"><segment><source>Device status</source><target>設備狀態</target></segment></unit>
+    <unit id="Unknown"><segment><source>Unknown</source><target>未知</target></segment></unit>
+    <unit id="Offline"><segment><source>Offline</source><target>離線</target></segment></unit>
+    <unit id="Idle"><segment><source>Idle</source><target>待機</target></segment></unit>
+    <unit id="Running"><segment><source>Running</source><target>運行</target></segment></unit>
+    <unit id="Warning"><segment><source>Warning</source><target>警告</target></segment></unit>
+    <unit id="Fault"><segment><source>Fault</source><target>故障</target></segment></unit>
+  </file>
+</xliff>

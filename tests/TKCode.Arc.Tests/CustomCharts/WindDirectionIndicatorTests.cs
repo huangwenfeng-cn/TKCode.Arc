@@ -15,6 +15,81 @@ namespace TKCode.Arc.Tests.Charts;
 
 public class WindDirectionIndicatorTests
 {
+    // AvaloniaTheory 使用多组 InlineData 检查相同规则；ShouldBe/ShouldContain 是断言，
+    // 条件不符合就让测试失败。这里先保存方向，再模拟质量和静风变化，检查优先级与恢复。
+    [AvaloniaTheory]
+    [InlineData(MeasurementQuality.NoData, "No data")]
+    [InlineData(MeasurementQuality.Stale, "Stale data")]
+    [InlineData(MeasurementQuality.Error, "Collection error")]
+    public void Quality_Overrides_Calm_Hides_Arrow_And_Recovers_Without_Old_Bearing_Motion(
+        MeasurementQuality quality, string expected)
+    {
+        ArcLanguage.Set(LanguageTags.EnUS);
+        var meter = new WindDirectionIndicator { Direction = 45, ShowReading = false };
+        var window = TestHelpers.Show(meter, ArcMotionLevel.Full);
+        try
+        {
+            ShowpieceTextRecording.Record(meter.Render).ShouldNotBeEmpty();
+            meter.IsCalm = true;
+            meter.Quality = quality;
+            meter.HasDirection.ShouldBeFalse();
+            meter.Direction.ShouldBe(45);
+            meter.ReadingText.ShouldBe(expected);
+            ControlAutomationPeer.CreatePeerForElement(meter).GetProvider<IValueProvider>()!.Value.ShouldBe(expected);
+            string DrawnText() => string.Concat(ShowpieceTextRecording.Record(meter.Render)
+                .Select(run => run.Run.Characters.ToString()));
+            // 读取真正绘制的字形文字，忽略空格后比较内容，兼容内置提示的换行排版；
+            // 还要确保没有省略号，不能只检查属性值完整却让画面提示被截断。
+            DrawnText().Replace(" ", string.Empty).ShouldContain(expected.Replace(" ", string.Empty));
+            DrawnText().ShouldNotContain("…");
+            meter.HasData = false;
+            // 原 HasData=false 必须仍优先显示无数据；重新打开后才回到原质量提示。
+            meter.ReadingText.ShouldBe("No data");
+            meter.HasData = true;
+            meter.ReadingText.ShouldBe(expected);
+            meter.Direction = 270;
+            meter.IsCalm = false;
+            meter.Quality = MeasurementQuality.Good;
+            meter.DrawnAngle.ShouldBe(270);
+            meter.HasDirection.ShouldBeTrue();
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Quality_Labels_Refresh_Language_And_Detached_State()
+    {
+        var meter = new WindDirectionIndicator { Quality = MeasurementQuality.Stale };
+        var host = new Border { Child = meter };
+        var window = TestHelpers.Show(host);
+        try
+        {
+            ArcLanguage.Set(LanguageTags.ZhCN);
+            meter.ReadingText.ShouldBe("数据过期");
+            ShowpieceTextRecording.Record(meter.Render).ShouldNotBeEmpty();
+            ArcLanguage.Set(LanguageTags.ZhTW);
+            meter.ReadingText.ShouldBe("資料過期");
+            meter.StaleLabel = "Sample expired";
+            ArcLanguage.Set(LanguageTags.EnUS);
+            meter.ReadingText.ShouldBe("Sample expired");
+            host.Child = null;
+            meter.Quality = MeasurementQuality.Error;
+            ArcLanguage.Set(LanguageTags.ZhCN);
+            host.Child = meter;
+            Dispatcher.UIThread.RunJobs();
+            meter.ReadingText.ShouldBe("采集异常");
+            meter.ErrorLabel = "Sensor failed";
+            meter.ReadingText.ShouldBe("Sensor failed");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaTheory]
     [InlineData(0, 0, "N")]
     [InlineData(360, 0, "N")]
@@ -166,6 +241,7 @@ public class WindDirectionIndicatorTests
         var meter = new WindDirectionIndicator();
         Should.Throw<ArgumentException>(() => meter.Direction = double.NaN);
         Should.Throw<ArgumentException>(() => meter.Direction = double.PositiveInfinity);
+        Should.Throw<ArgumentException>(() => meter.Quality = (MeasurementQuality)99);
         meter.Direction = double.MaxValue;
         double.IsFinite(meter.NormalizedDirection).ShouldBeTrue();
         meter.NormalizedDirection.ShouldBeInRange(0, 359.999);

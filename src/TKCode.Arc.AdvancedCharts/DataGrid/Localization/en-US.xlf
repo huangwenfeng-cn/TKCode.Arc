@@ -921,5 +921,8 @@
         <source>Unpin column</source>
       </segment>
     </unit>
+    <unit id="CellSaving"><segment><source>Saving cell…</source></segment></unit>
+    <unit id="CellSaved"><segment><source>Cell saved</source></segment></unit>
+    <unit id="CellSaveFailed"><segment><source>Could not save cell. Your draft is kept; check the server before retrying.</source></segment></unit>
   </file>
 </xliff>

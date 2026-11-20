@@ -99,6 +99,7 @@ internal sealed class DataGridEditorLayer : Control
     private ArcPopup? _datePopup;
     private Calendar? _calendar;
     private bool _syncing;
+    private string _lastEditorText = string.Empty;
 
     public DataGridEditorLayer(DataGrid grid, DataGridViewport viewport)
     {
@@ -192,9 +193,14 @@ internal sealed class DataGridEditorLayer : Control
 
     private void OnHostLostFocus(object? sender, RoutedEventArgs e)
     {
+        if (_grid.IsCellCommitPending)
+        {
+            return;
+        }
+        var lostEdit = _edit;
         Dispatcher.UIThread.Post(() =>
         {
-            if (_edit is not { Done: false } || IsEditorFocused)
+            if (!ReferenceEquals(lostEdit, _edit) || _edit is not { Done: false } || IsEditorFocused || _grid.IsCellCommitPending)
             {
                 return;
             }
@@ -225,6 +231,7 @@ internal sealed class DataGridEditorLayer : Control
         _options = options;
         _highlight = Math.Max(0, IndexOf(options, draft));
         _syncing = true;
+        _lastEditorText = draft;
         editor.Text = draft;
         _syncing = false;
         editor.SetInvalid(false);
@@ -266,6 +273,38 @@ internal sealed class DataGridEditorLayer : Control
             // and it would be built with null (a template reading context.Value crashed on the click that ended the edit).
             host.ContentTemplate = null;
             host.Content = null;
+        }
+    }
+
+    public void SetCommitPending(bool pending)
+    {
+        // 文本框保持焦点和草稿，但禁止输入；模板可能包含任意输入控件，统一暂停其交互。
+        // 禁用模板造成的失焦由 OnHostLostFocus 的 pending 检查消除，不能触发第二次写入。
+        if (_editor is { } editor)
+        {
+            editor.IsReadOnly = pending;
+        }
+        if (_host is { } host)
+        {
+            host.IsEnabled = !pending;
+            if (host.IsVisible)
+            {
+                if (pending)
+                {
+                    // 暂停自定义控件后让网格接收 Escape；失败恢复时把焦点交回可编辑内容。
+                    _viewport.FocusGrid();
+                }
+                else
+                {
+                    host.GetVisualDescendants().OfType<InputElement>()
+                        .FirstOrDefault(c => c.Focusable && c.IsEffectivelyVisible && c.IsEffectivelyEnabled)?.Focus();
+                }
+            }
+        }
+        if (pending)
+        {
+            HideOptions();
+            HideCalendar();
         }
     }
 
@@ -323,6 +362,15 @@ internal sealed class DataGridEditorLayer : Control
 
     private void OnEditorKeyDown(object? sender, KeyEventArgs e)
     {
+        if (_grid.IsCellCommitPending)
+        {
+            e.Handled = true;
+            if (e.Key == Key.Escape)
+            {
+                _grid.CancelEditFromEditor();
+            }
+            return;
+        }
         if (_edit is not { } edit || _column is not { } column)
         {
             return;
@@ -399,6 +447,14 @@ internal sealed class DataGridEditorLayer : Control
         {
             return;
         }
+        // TextChanged 可能在 Open 返回后才派发；初始化草稿的旧通知不能清除刚出现的保存错误。
+        // 仅当实际文本与上次处理的文本不同，才把它视为用户修正并重新计算选项。
+        var text = Text;
+        if (string.Equals(text, _lastEditorText, StringComparison.Ordinal))
+        {
+            return;
+        }
+        _lastEditorText = text;
         _edit.Invalid = false;
         _editor?.SetInvalid(false);
         if (_column.Type == DataGridColumnType.Select)
@@ -415,9 +471,14 @@ internal sealed class DataGridEditorLayer : Control
 
     private void OnEditorLostFocus(object? sender, RoutedEventArgs e)
     {
+        if (_grid.IsCellCommitPending)
+        {
+            return;
+        }
+        var lostEdit = _edit;
         Dispatcher.UIThread.Post(() =>
         {
-            if (_edit is not { Done: false } || IsEditorFocused)
+            if (!ReferenceEquals(lostEdit, _edit) || _edit is not { Done: false } || IsEditorFocused || _grid.IsCellCommitPending)
             {
                 return;
             }

@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+                    x:ClassModifier="internal"
+                    x:Class="TKCode.Arc.LevelIndicatorTheme">
+    <!-- 自绘液位计没有 ControlTemplate，这里只给 C# 属性提供主题默认值。
+         TokenResource 是动态资源：改变主题/尺寸/圆角/字重时自动更新对应属性，
+         C# 再据此重新布局或刷新缓存；这里不保存液位数值和质量。 -->
+    <ControlTheme x:Key="{x:Type arc:LevelIndicator}" TargetType="arc:LevelIndicator">
+        <Setter Property="arc:ArcMotion.Tracks" Value="True" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="DialWidth" Value="{arc:LevelIndicatorTokenResource DialWidth}" />
+        <Setter Property="DialHeight" Value="{arc:LevelIndicatorTokenResource DialHeight}" />
+        <Setter Property="VesselWidth" Value="{arc:LevelIndicatorTokenResource VesselWidth}" />
+        <Setter Property="OutlineThickness" Value="{arc:LevelIndicatorTokenResource OutlineThickness}" />
+        <!-- 圆角来自 ArcDesign 而不是组件 Token：切换角落风格时罐体跟随。 -->
+        <Setter Property="VesselCornerRadius" Value="{arc:ArcDesignTokenResource RadiusControl}" />
+        <Setter Property="MediumFontWeight" Value="{arc:ArcDesignTokenResource WeightMedium}" />
+        <Setter Property="RegularFontWeight" Value="{arc:ArcDesignTokenResource WeightRegular}" />
+    </ControlTheme>
+</ResourceDictionary>
